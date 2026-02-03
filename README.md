@@ -13,7 +13,18 @@ A smart skip script for Anikku that automatically skips anime openings, endings,
 
 ## Installation
 
-### Step 1: Install the Script
+### Step 1: Enable MPV Scripts in Anikku
+
+1. In Anikku, go to **More → Player settings → Advanced**
+2. Toggle **Enable MPV Scripts** to ON
+3. Tap **Edit MPV configuration file for further player settings**
+4. Add this line to the configuration file:
+```
+   scripts=~~/scripts/
+```
+5. Save and close the configuration file
+
+### Step 2: Install the Script
 
 1. Download `chapterskip.lua` from this repository
 2. Open the Anikku base folder you set during initial setup
@@ -22,7 +33,7 @@ A smart skip script for Anikku that automatically skips anime openings, endings,
    - Full path should be: `[Anikku base folder]/mpv-config/scripts/chapterskip.lua`
 5. Restart Anikku
 
-### Step 2: Set Up the Custom Button (Optional)
+### Step 3: Set Up the Custom Button (Optional)
 
 The script works automatically, but you can add a manual skip button:
 
@@ -130,15 +141,21 @@ local opts = {
 
 ## Troubleshooting
 
+**Script not loading at all:**
+- Make sure **Enable MPV Scripts** is toggled ON in **More → Player settings → Advanced**
+- Verify `scripts=~~/scripts/` is in your MPV configuration file
+- Make sure the script is in `[Anikku base folder]/mpv-config/scripts/chapterskip.lua`
+- Restart Anikku completely
+
 **Auto-skip not working:**
 - Make sure `auto_skip = true` in the script
 - Check that the chapter titles match the patterns (e.g., "Opening", "OP", "Ending", "ED")
 - Some anime may not have properly named chapters
 
 **Manual button doesn't appear:**
-- Make sure the script is in `[Anikku base folder]/mpv-config/scripts/chapterskip.lua`
-- Restart Anikku completely
+- Make sure the script is loaded (check troubleshooting above)
 - Check that you set the button as primary in custom button settings
+- Restart Anikku after adding the button
 
 **Script doesn't find silence:**
 - Try adjusting `quietness` and `duration` settings
