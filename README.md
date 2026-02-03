@@ -1,30 +1,39 @@
 # AnimeSkip for Anikku
 
-A smart skip script for Anikku that automatically skips anime openings by detecting silence or using embedded chapters.
+A smart skip script for Anikku that automatically skips anime openings, endings, previews, and recaps by detecting chapter markers or scanning for silence.
 
 ## Features
 
-- 🎯 **Chapter Priority**: Automatically uses embedded chapter markers if available
-- 🔇 **Silence Detection**: Scans for silence at the end of openings when chapters aren't available
+- 🎯 **Auto-Skip Chapters**: Automatically skips Opening, Ending, Preview, and Recap chapters
+- 🎚️ **Customizable**: Toggle each skip type individually (Opening/Ending/Intro/Outro/Preview/Recap)
+- 🔇 **Silence Detection**: Scans for silence when chapters aren't available
 - ⚡ **Fast Scanning**: Scans at 100x speed to quickly find silence
 - 🛡️ **Fallback Protection**: If no silence is found within 3 minutes, skips +85 seconds
-- 🎚️ **Adjustable Sensitivity**: Customize detection settings for different anime
+- 🎛️ **Adjustable Sensitivity**: Customize detection settings for different anime
 
 ## Installation
 
 ### Step 1: Install the Script
 
 1. Download `chapterskip.lua` from this repository
-2. In Anikku, go to **More → Advanced → Open config directory**
-3. Navigate to the `scripts` folder (create it if it doesn't exist)
+2. Open the Anikku base folder you set during initial setup
+3. Navigate to `mpv-config/scripts/` (create the folders if they don't exist)
 4. Copy `chapterskip.lua` into the `scripts` folder
+   - Full path should be: `[Anikku base folder]/mpv-config/scripts/chapterskip.lua`
 5. Restart Anikku
 
-### Step 2: Set Up the Custom Button
+### Step 2: Set Up the Custom Button (Optional)
+
+The script works automatically, but you can add a manual skip button:
 
 1. In Anikku, go to **More → Player settings → Custom buttons**
 2. Tap the **+** button to add a new custom button
 3. Configure the button with the following settings:
+
+**Title:**
+```
+Skip
+```
 
 **Lua code (tap):**
 ```lua
@@ -32,8 +41,8 @@ mp.commandv("script-binding", "skip-to-silence")
 ```
 
 **Lua code (on long press):**
-```lua
-aniyomi.show_text("Skip to silence")
+```
+(Leave this blank - long press is not required)
 ```
 
 **On startup:**
@@ -49,50 +58,87 @@ end
 
 ## Usage
 
-Simply tap the **Skip** button during anime playback:
+### Automatic Skipping
 
-- If the anime has embedded chapters (like "OP" or "Opening"), it will skip to the next chapter
-- If no chapters are available, it will scan forward at 100x speed looking for silence
-- If no silence is found within 3 minutes, it will skip forward 85 seconds
+The script automatically skips the following chapter types when detected:
+- ✅ **Opening** (OP, Opening, オープニング, 片头) - Enabled by default
+- ✅ **Ending** (ED, Ending, エンディング, 片尾) - Enabled by default
+- ✅ **Preview** (Preview, Next Episode, プレビュー, 予告) - Enabled by default
+- ✅ **Recap** (Recap, Previously, あらすじ, 回顾) - Enabled by default
+- ❌ **Intro** - Disabled by default
+- ❌ **Outro** - Disabled by default
+
+### Manual Skipping
+
+If you added the custom button, tap it to manually skip:
+- If chapters exist → skips to next chapter
+- If no chapters → scans forward for silence at 100x speed
+- If no silence found in 3 minutes → skips +85 seconds from activation point
 
 ## Configuration
 
-You can adjust the script's behavior by editing `chapterskip.lua` and changing these values:
+You can customize the script's behavior by editing `chapterskip.lua` in `[Anikku base folder]/mpv-config/scripts/`:
+
+### Toggle Auto-Skip for Each Chapter Type
 ```lua
 local opts = {
-    quietness = -30,           -- dB threshold (-50 = stricter, -30 = more lenient)
-    duration = 0.5,            -- Minimum silence duration in seconds
-    prefer_chapters = true,    -- Try chapters before silence detection
-    fallback_skip = 85,        -- Seconds to skip if no silence found
-    silence_offset = 0.5,      -- Rewind from silence end to avoid overshooting
-    max_scan_duration = 180,   -- Max seconds to scan before using fallback
+    auto_skip = true,              -- Master toggle for auto-skip
+    skip_opening = true,           -- Skip Opening chapters
+    skip_ending = true,            -- Skip Ending chapters
+    skip_intro = false,            -- Skip Intro chapters
+    skip_outro = false,            -- Skip Outro chapters
+    skip_preview = true,           -- Skip Preview chapters
+    skip_recap = true,             -- Skip Recap chapters
 }
 ```
 
-### Adjusting Sensitivity
+Set any of these to `false` to disable skipping for that chapter type.
 
-If the script is skipping too often during episodes:
-- Increase `quietness` to `-40` or `-50` (stricter)
+### Adjust Silence Detection
+```lua
+local opts = {
+    quietness = -50,               -- dB threshold (-60 = stricter, -30 = more lenient)
+    duration = 0.5,                -- Minimum silence duration in seconds
+    fallback_skip = 85,            -- Seconds to skip if no silence found
+    silence_offset = 0.5,          -- Rewind from silence end to avoid overshooting
+    max_scan_duration = 180,       -- Max seconds to scan before using fallback
+}
+```
+
+### Sensitivity Guide
+
+**If the script skips too often during episodes:**
+- Increase `quietness` to `-60` (stricter - needs quieter audio)
 - Increase `duration` to `1.0` or `1.5` (needs longer silence)
 
-If the script isn't detecting silence at the end of openings:
-- Decrease `quietness` to `-20` (more lenient)
+**If the script doesn't detect silence at the end of openings:**
+- Decrease `quietness` to `-40` or `-30` (more lenient)
 - Decrease `duration` to `0.3` (detects shorter silence)
 
 ## How It Works
 
-1. **Chapter Detection**: First checks if the video has embedded chapters
-2. **Silence Scanning**: If no chapters, adds an audio filter that detects silence
-3. **Fast Forward**: Plays at 100x speed with muted audio and black screen
-4. **Smart Stopping**: Stops when silence is detected or max scan time is reached
-5. **Fallback**: If nothing works, skips forward 85 seconds from activation point
+### Auto-Skip (Chapter Detection)
+1. **Chapter Detection**: Watches for chapter changes during playback
+2. **Pattern Matching**: Checks if chapter title matches skip patterns (Opening, Ending, etc.)
+3. **Auto-Skip**: Automatically jumps to the next chapter when a match is found
+
+### Manual Skip (Silence Detection)
+1. **Audio Filter**: Adds a silence detection filter to the audio stream
+2. **Fast Forward**: Plays at 100x speed with muted audio and black screen
+3. **Smart Stopping**: Stops when silence is detected
+4. **Fallback**: If max scan time is reached, skips +85 seconds from activation point
 
 ## Troubleshooting
 
-**Button doesn't appear:**
-- Make sure the script is in the `scripts` folder
+**Auto-skip not working:**
+- Make sure `auto_skip = true` in the script
+- Check that the chapter titles match the patterns (e.g., "Opening", "OP", "Ending", "ED")
+- Some anime may not have properly named chapters
+
+**Manual button doesn't appear:**
+- Make sure the script is in `[Anikku base folder]/mpv-config/scripts/chapterskip.lua`
 - Restart Anikku completely
-- Check that the button is set as primary in custom button settings
+- Check that you set the button as primary in custom button settings
 
 **Script doesn't find silence:**
 - Try adjusting `quietness` and `duration` settings
@@ -103,6 +149,10 @@ If the script isn't detecting silence at the end of openings:
 - Increase `silence_offset` to rewind more from detected silence
 - Try `silence_offset = 1.0` or higher
 
+**Specific chapter type keeps skipping when I don't want it to:**
+- Set that chapter type to `false` in the configuration
+- Example: `skip_preview = false` to stop skipping preview chapters
+
 ## Credits
 
 - Original `skiptosilence.lua` by [detuur](https://github.com/detuur/mpv-scripts) and microraptor
@@ -112,29 +162,3 @@ If the script isn't detecting silence at the end of openings:
 ## License
 
 MIT License - See LICENSE file for details
-```
-
-## LICENSE
-```
-MIT License
-
-Copyright (c) 2022 detuur, microraptor (original skiptosilence.lua)
-Copyright (c) 2025 deep-sleepy (modifications for Anikku)
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
