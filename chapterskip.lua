@@ -17,7 +17,7 @@
 --]]
 
 local opts = {
-    quietness = -50,
+    quietness = -60,
     duration = 0.5,
     mutewhileskipping = true,
     prefer_chapters = true,
